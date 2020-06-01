@@ -36,7 +36,7 @@ int bornCounter = 0;
 float timeframeBorn = 0;
 float timeframeDeath = 0;
 
-//SIMULATION PARAMETER
+//SIMULATION PARAMETERS
 
 float width = 2560 * 2;
 float height = 1440 * 2;
