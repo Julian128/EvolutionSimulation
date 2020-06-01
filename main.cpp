@@ -170,7 +170,7 @@ int main()
                     timeframeBorn++;
                                        
 
-
+                    
                     newBoi.setRadius(bois[i].getRadius() * 0.5 + bois[j].getRadius() * 0.5);
                     newBoi.setPosition(bois[i].getPosition().x, bois[i].getPosition().y);
                     newBoi.setOrigin(newBoi.getRadius(), newBoi.getRadius());
