@@ -31,17 +31,25 @@ float pythagoras(float a, float b)
     return sqrt(a * a + b * b);
 }
 
+
+
 int deathCounter = 0;
 int bornCounter = 0;
 float timeframeBorn = 0;
 float timeframeDeath = 0;
+float deathAge = 0;
+float deathHunger = 0;
 
-//SIMULATION PARAMETER
+//SIMULATION PARAMETERS
+bool draw = true;
+int frameRate = 1000;
+std::string logname = "test";
 
 float width = 2560 * 2;
 float height = 1440 * 2;
 float population = 50;
-float maxSight = 300;
+float maxSight = 400;
+float maxAge = 1000;
 float hungerChance = 0.99;
 float fruitSpawnChance = 0.98;
 
@@ -56,11 +64,38 @@ public:
     float reproduceCooldown;
     float attraction;
     float sight;
-    float hungerRate;
+    float endurance;
     float age = 0;
+    float maxAge;
     float gen = 0;
+
 };
 
+
+blobs heritage(blobs &a, blobs &b)
+{
+    blobs newBoi;
+
+    newBoi.setRadius(a.getRadius() * 0.5 + b.getRadius() * 0.5);
+    newBoi.setPosition(a.getPosition().x, a.getPosition().y);
+    newBoi.setOrigin(newBoi.getRadius(), newBoi.getRadius());
+    newBoi.velocity = { (a.velocity[0] + b.velocity[0]) / 2 + random(-0.2, 0.2), (a.velocity[1] + b.velocity[1]) / 2 + random(-0.1, 0.1) };
+    newBoi.setFillColor(Color::Yellow);
+    newBoi.reproduceCooldown = random(100, 200);
+    newBoi.sight = bound((a.sight + b.sight) / 2 + random(-25, 25), 0, maxSight);
+    newBoi.endurance = bound(((a.endurance + b.endurance) / 2 + random(-0.05, 0.05)), 0.75, 1.25);
+    newBoi.gen = floor((a.gen + b.gen) / 2 + 1);
+    newBoi.attraction = bound((a.attraction + b.attraction) / 2 + random(-0.02, 0.02), 0, 1);
+    newBoi.maxAge = bound((a.maxAge + b.maxAge) / 2 + random(-6, 6), 200, maxAge);
+
+
+    a.reproduceCooldown = random(50, 100);
+    b.reproduceCooldown = random(50, 100);
+    a.setRadius(a.getRadius() * 0.7);
+    b.setRadius(b.getRadius() * 0.7);
+
+    return newBoi;
+}
 
 int main()
 {
@@ -69,7 +104,7 @@ int main()
     int framecounter = 0;
 
     RenderWindow window(VideoMode(width, height), "Evolution");
-    window.setFramerateLimit(300);
+    window.setFramerateLimit(frameRate);
 
     std::vector<blobs> bois(population);
     std::vector<blobs> fruits;
@@ -85,7 +120,8 @@ int main()
         bois[i].reproduceCooldown = random(50, 100);
         bois[i].attraction = random(0, 1);
         bois[i].sight = random(0, maxSight);
-        bois[i].hungerRate = random(0.75, 1.25);
+        bois[i].endurance = random(0.75, 1.25);
+        bois[i].maxAge = random(200, maxAge);
     }
 
 
@@ -114,7 +150,6 @@ int main()
                 bois[i].velocity[1] = -bois[i].velocity[1];
             }
         }
-        
 
         //SNAKE STYLE
         /*        if (bois[i].getPosition().x <= 10)
@@ -163,53 +198,21 @@ int main()
         {
             for (int j = 0; j < bois.size(); j++)
             {
-                if (i != j && bois[i].reproduceCooldown <= 0 && bois[j].reproduceCooldown <= 0  && pow(bois[i].getPosition().x - bois[j].getPosition().x, 2) + pow(bois[i].getPosition().y - bois[j].getPosition().y, 2) <= pow(bois[i].getRadius() + bois[j].getRadius(), 2))
+                if (pow((bois[i].attraction * bois[j].attraction), 5) / 5 >= num)
                 {
-                    blobs newBoi;
-                    bornCounter++;
-                    timeframeBorn++;
-                                       
-
-                    
-                    newBoi.setRadius(bois[i].getRadius() * 0.5 + bois[j].getRadius() * 0.5);
-                    newBoi.setPosition(bois[i].getPosition().x, bois[i].getPosition().y);
-                    newBoi.setOrigin(newBoi.getRadius(), newBoi.getRadius());
-                    newBoi.velocity = { (bois[i].velocity[0] + bois[j].velocity[0]) / 2 + random(-0.2, 0.2), (bois[i].velocity[1] + bois[j].velocity[1]) / 2 + random(-0.1, 0.1) };
-                    newBoi.setFillColor(Color::Yellow);
-                    newBoi.reproduceCooldown = random(100, 200);
-                    newBoi.sight = bound((bois[i].sight + bois[j].sight) / 2 + random(-25, 25), 0, maxSight);
-                    newBoi.hungerRate = bound(((bois[i].hungerRate + bois[j].hungerRate) / 2 + random(-0.02, 0.02)), 0.75, 1.25);
-                    newBoi.gen = floor((bois[i].gen + bois[j].gen) / 2 + 1);
-                    newBoi.attraction = bound((bois[i].attraction + bois[j].attraction) / 2 + random(-0.2, 0.2), 0, 1);
-                        
-
-                    bois[i].reproduceCooldown = random(50, 100);
-                    bois[j].reproduceCooldown = random(50, 100);
-                    bois[i].setRadius(bois[i].getRadius() * 0.7);
-                    bois[j].setRadius(bois[j].getRadius() * 0.7);
-
-
-                    std::cout << "New boi!" << std::endl;
-                    bois.push_back(newBoi);
-                }
-
-                //else if(i != j && bois[i].reproduceCooldown < 50 && bois[j].reproduceCooldown < 50 && bois[i].reproduceCooldown > 0 && bois[j].reproduceCooldown > 0 && pow(bois[i].getPosition().x - bois[j].getPosition().x, 2) + pow(bois[i].getPosition().y - bois[j].getPosition().y, 2) <= pow(bois[i].getRadius() + bois[j].getRadius(), 2))
-                //{
-                    /*if (num > 0.99 && bois[i].getRadius() > 20 && bois[i].getRadius() > bois[j].getRadius())
+                    if (i != j && bois[i].reproduceCooldown <= 0 && bois[j].reproduceCooldown <= 0 && pow(bois[i].getPosition().x - bois[j].getPosition().x, 2) + pow(bois[i].getPosition().y - bois[j].getPosition().y, 2) <= pow(bois[i].getRadius() + bois[j].getRadius(), 2))
                     {
-                        bois[i].setRadius(bois[i].getRadius() + bois[j].getRadius() / 2);
-                        bois.erase(bois.begin() + j);
-                        std::cout << "death by canibalism" << std::endl;
-                        deathCounter++;
-                    }*/
+                        bornCounter++;
+                        timeframeBorn++;
+                        bois.push_back(heritage(bois[i], bois[j]));
+                    }
 
-                //}
-
+                }
             }
         }
 
         //SPAWN FRUITS
-        if (num > bound(fruitSpawnChance / floor(sqrt(fruits.size())), 0.95, 0.99))
+        if (num > bound(fruitSpawnChance - sqrt(fruits.size()) * 0.003, 0.95, 0.99))
         {
             blobs newFruit;
 
@@ -298,21 +301,22 @@ int main()
         }
 
 
-        //HUNGER
+        //AGE & HUNGER
         if (num > hungerChance)
         {
             for (int i = 0; i < bois.size(); i++)
             {
                 bois[i].age++;
                 bois[i].reproduceCooldown--;
-                if (bois[i].age > 100000)
-
+                if (bois[i].age > bois[i].maxAge)
                 {
                     bois.erase(bois.begin() + i);
-                    std::cout << "DEATH BY AGE" << std::endl;
+                    std::cout << "death by age" << std::endl;
+                    deathAge++;
+                    deathCounter++;
+                    timeframeDeath++;
                     i--;
                 }
-
             }
 
             for (int i = 0; i < bois.size(); i++)
@@ -321,16 +325,18 @@ int main()
 
                 if (bois[i].getRadius() > 0)
                 {
-                    bois[i].setRadius(bois[i].getRadius() - 0.1 * bois[i].hungerRate * pythagoras(bois[i].velocity[0], bois[i].velocity[1]));
+                    bois[i].setRadius(bois[i].getRadius() - 0.1 * bois[i].endurance * pythagoras(bois[i].velocity[0], bois[i].velocity[1]));
                     bois[i].velocity[0] *= 1 / 0.995;
                     bois[i].velocity[1] *= 1 / 0.995;
                 }
                 else
                 {
                     bois.erase(bois.begin() + i);
-                    std::cout << "death" << std::endl;
+                    std::cout << "death by hunger" << std::endl;
+                    deathHunger++;
                     deathCounter++;
                     timeframeDeath++;
+                    i--;
 
                 }
 
@@ -352,8 +358,10 @@ int main()
             float avgAge = 0;
             float avgVel = 0;
             float avgSight = 0;
-            float avgHungerRate = 0;
+            float avgEndurance = 0;
             float reproductionRate = 0;
+            float avgAttraction = 0;
+            float avgMaxAge = 0;
 
             for (int i = 0; i < bois.size(); i++)
             {
@@ -362,8 +370,9 @@ int main()
                 avgAge += bois[i].age;
                 avgVel += sqrt(pow((bois[i].velocity[0]), 2) + pow((bois[i].velocity[1]), 2));              
                 avgSight += bois[i].sight;
-                avgHungerRate += bois[i].hungerRate;
-
+                avgEndurance += bois[i].endurance;
+                avgAttraction += bois[i].attraction;
+                avgMaxAge += bois[i].maxAge;
             }
 
             if (timeframeDeath == 0)
@@ -375,17 +384,20 @@ int main()
             std::cout << "Population Count: " << bois.size() << std::endl;
             std::cout << "Average Velocity: " << avgVel / bois.size() << std::endl;
             std::cout << "Average Sight: " << avgSight / bois.size() << std::endl;
-            std::cout << "Average Hunger Rate: " << avgHungerRate / bois.size() << std::endl;
+            std::cout << "Average Endurance: " << avgEndurance / bois.size() << std::endl;
             std::cout << "Total Newborns: " << bornCounter << std::endl;
             std::cout << "Total Deaths: " << deathCounter << std::endl;
             std::cout << "Average Age: " << avgAge / bois.size() << std::endl;
             std::cout << "Average Gen: " << avgGen / bois.size() << std::endl;
-            std::cout << "Reproduction Rate: " << reproductionRate << std::endl << std::endl;
+            std::cout << "Reproduction Rate: " << reproductionRate << std::endl;
+            std::cout << "Average Attraction: " << avgAttraction / bois.size() << std::endl;
+            std::cout << "Average maxAge: " << avgMaxAge / bois.size() << std::endl;
+            std::cout << "deathAge / deathHunger: " << deathAge / deathHunger << std::endl << std::endl;
 
             std::ofstream log;
-            log.open("evolution_data_fruitchange.txt", std::fstream::app);
+            log.open(logname, std::fstream::app);
 
-            log << bois.size() << "," << avgVel / bois.size() << "," << avgSight / bois.size() << "," << avgHungerRate / bois.size() << "," << avgAge / bois.size() << "," << avgGen / bois.size() << "," << reproductionRate << "\n";
+            log << bois.size() << "," << avgVel / bois.size() << "," << avgSight / bois.size() << "," << avgEndurance / bois.size() << "," << avgAge / bois.size() << "," << avgGen / bois.size() << "," << reproductionRate << "," << avgAttraction / bois.size() << "," << fruits.size() << "," << "\n";
 
 
         }
@@ -406,17 +418,22 @@ int main()
         for (int i = 0; i < bois.size(); i++)
             bois[i].move(bois[i].velocity[0], bois[i].velocity[1]);
 
-        //DRAW
-        window.clear(Color(100, 100, 100));
-
-        for (int i = 0; i < bois.size(); i++)
-            window.draw(bois[i]);
-        for (int i = 0; i < fruits.size(); i++)
-            window.draw(fruits[i]);
-
-        window.display();
 
         framecounter++;
+
+        //DRAW
+        if (draw == true)
+        {
+            window.clear(Color(100, 100, 100));
+
+            for (int i = 0; i < bois.size(); i++)
+                window.draw(bois[i]);
+            for (int i = 0; i < fruits.size(); i++)
+                window.draw(fruits[i]);
+
+            window.display();
+
+        }
     }
 
 
