@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "make": "cpp",
+        "iostream": "cpp",
+        "cmath": "cpp",
+        "ctime": "cpp"
+    }
+}
